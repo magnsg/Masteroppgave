@@ -16,7 +16,7 @@ def mcmc(y,numstates):
     C = y.shape[0]#Number of cells
     m = numstates#Number of states
     states = np.arange(0,m)#States
-    N = 10#Number of iterations
+    N = 2#Number of iterations
 
 
     #Initialize parameters
@@ -54,6 +54,7 @@ def mcmc(y,numstates):
             w_star = np.full(m,1/m)
         else:
             w_star = w/np.sum(w)
+        print(w_star)
         #Sample new state
         S[0] = np.random.choice(states, p=w_star)
 
@@ -89,6 +90,23 @@ def mcmc(y,numstates):
             w_star = w/np.sum(w)
         #Sample new state
         S[T-1] = np.random.choice(states, p=w_star)
+
+
+    	#Update Transition matrix
+        for i in range(m):
+            for j in range(m):
+                N_ij = 0
+                N_i = 0
+                for t in range(T-1):
+                    if S[t] == i and S[t+1] == j:
+                        N_ij += 1
+                    if S[t] == i:
+                        N_i += 1
+                pi[i,j] = np.random.dirichlet(eta + np.array([N_ij,N_i-N_ij]))[0]
+
+        print(S)
+
+
 
 
     print(S[0:10])
