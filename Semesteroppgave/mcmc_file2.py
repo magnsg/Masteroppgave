@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import scipy.io as sio
 import scipy.special as sp
 from multiprocessing import Pool, cpu_count
+from tqdm import tqdm  # Import tqdm for progress bar
+
 
 def update_lambda_rate(args):
     y, S, alpha, beta, c, i = args
@@ -12,12 +14,12 @@ def update_lambda_rate(args):
 def update_state_sequence(args):
     y, pi, lambdaRate, states, t, S, C = args
     if t == 0:
-        k = S[1]
+        k = S[t+1]
         w = np.zeros(len(states))
         for j in range(len(states)):
             ln_sum = 0
             for c in range(C):
-                ln_sum += y[c, 0] * np.log(lambdaRate[c, j]) - lambdaRate[c, j] - sp.gammaln(y[c, 0] + 1)
+                ln_sum += y[c, 0] * np.log(lambdaRate[c, j]) - lambdaRate[c, j]
             w[j] = pi[j, k]*np.exp(ln_sum)
         w_star = w / np.sum(w) if np.sum(w) != 0 else np.full(len(states), 1 / len(states))
         return np.random.choice(states, p=w_star)
@@ -27,7 +29,7 @@ def update_state_sequence(args):
         for j in range(len(states)):
             ln_sum = 0
             for c in range(C):
-                ln_sum += y[c, t] * np.log(lambdaRate[c, j]) - lambdaRate[c, j] - sp.gammaln(y[c, t] + 1)
+                ln_sum += y[c, t] * np.log(lambdaRate[c, j]) - lambdaRate[c, j]
             w[j] = pi[i, j] * np.exp(ln_sum)
         w_star = w / np.sum(w) if np.sum(w) != 0 else np.full(len(states), 1 / len(states))
         return np.random.choice(states, p=w_star)
@@ -38,17 +40,17 @@ def update_state_sequence(args):
         for j in range(len(states)):
             ln_sum = 0
             for c in range(C):
-                ln_sum += y[c, t] * np.log(lambdaRate[c, j]) - lambdaRate[c, j] - sp.gammaln(y[c, t] + 1)
+                ln_sum += y[c, t] * np.log(lambdaRate[c, j]) - lambdaRate[c, j]
             w[j] = pi[i, j] * pi[j, k] * np.exp(ln_sum)
         w_star = w / np.sum(w) if np.sum(w) != 0 else np.full(len(states), 1 / len(states))
         return np.random.choice(states, p=w_star)
 
-def mcmc(y, numstates):
+def mcmc(y, numstates, N_iter = 10):
     T = y.shape[1]  # Number of time points
     C = y.shape[0]  # Number of cells
     m = numstates  # Number of states
     states = np.arange(0, m)  # States
-    N_iter = 10  # Number of iterations
+    N_iter = N_iter  # Number of iterations
 
     pi = np.full((m, m), 1 / m)  # Transition matrix
     lambdaRate = np.random.rand(C, m)  # Rate matrix
@@ -60,8 +62,7 @@ def mcmc(y, numstates):
 
     pool = Pool(cpu_count())  # Create a pool of workers
 
-    for l in range(N_iter):
-        print(l)
+    for l in tqdm(range(N_iter), desc="MCMC Progress"):  # Add tqdm progress bar
 
         # Update Rate matrix in parallel
         args = [(y, S, alpha, beta, c, i) for c in range(C) for i in range(m)]
