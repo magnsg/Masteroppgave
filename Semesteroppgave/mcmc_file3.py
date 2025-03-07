@@ -10,45 +10,29 @@ def update_lambda_rate(args):
     S_is_i = S == i
     return np.random.gamma(alpha + np.sum(y[c, S_is_i]), 1 / (beta + np.sum(S_is_i)))
 
-import numpy as np
-
 def update_state_sequence(args):
     y, pi, lambdaRate, states, t, S, C, log_lambdaRate = args
     m = len(states)  # Number of states
+    T = y.shape[1]  # Number of time points
 
-    if t == 0:
-        k = S[t + 1]
-        # Compute the log-sum term for all j using matrix operations
-        ln_sum = np.sum(y[:, 0][:, np.newaxis] * log_lambdaRate - lambdaRate, axis=0)
-        # Compute w for all j using vectorized operations
-        w = pi[:, k] * np.exp(ln_sum)
-        # Normalize w to get w_star
-        w_star = w / np.sum(w) if np.sum(w) != 0 else np.full(m, 1 / m)
-        # Sample new state
-        return np.random.choice(states, p=w_star)
+    i = S[t - 1] if t != 0 else None  # Previous state (None for t = 0)
+    k = S[t + 1] if t != T-1 else None  # Next state (None for t = T-1)
 
-    elif t == y.shape[1] - 1:
-        i = S[t - 1]
-        # Compute the log-sum term for all j using matrix operations
-        ln_sum = np.sum(y[:, t][:, np.newaxis] * log_lambdaRate - lambdaRate, axis=0)
-        # Compute w for all j using vectorized operations
-        w = pi[i, :] * np.exp(ln_sum)
-        # Normalize w to get w_star
-        w_star = w / np.sum(w) if np.sum(w) != 0 else np.full(m, 1 / m)
-        # Sample new state
-        return np.random.choice(states, p=w_star)
+    # Compute the log-sum term for all j using matrix operations
+    ln_sum = np.sum(y[:, t][:, np.newaxis] * log_lambdaRate - lambdaRate, axis=0)
 
-    else:
-        i = S[t - 1]
-        k = S[t + 1]
-        # Compute the log-sum term for all j using matrix operations
-        ln_sum = np.sum(y[:, t][:, np.newaxis] * log_lambdaRate - lambdaRate, axis=0)
-        # Compute w for all j using vectorized operations
-        w = pi[i, :] * pi[:, k] * np.exp(ln_sum)
-        # Normalize w to get w_star
-        w_star = w / np.sum(w) if np.sum(w) != 0 else np.full(m, 1 / m)
-        # Sample new state
-        return np.random.choice(states, p=w_star)
+    # Compute w for all j using vectorized operations
+    w = np.exp(ln_sum)
+    if i is not None:
+        w *= pi[i, :]  # Apply transition probability from the previous state
+    if k is not None:
+        w *= pi[:, k]  # Apply transition probability to the next state
+
+    # Normalize w to get w_star
+    w_star = w / np.sum(w) if np.sum(w) != 0 else np.full(m, 1 / m)
+
+    # Sample new state
+    return np.random.choice(states, p=w_star)
 
 def mcmc(y, numstates, N_iter = 10):
     T = y.shape[1]  # Number of time points
@@ -75,8 +59,7 @@ def mcmc(y, numstates, N_iter = 10):
         lambdaRate = np.array(results).reshape(C, m)
 
         # Update State sequence in parallel
-        # Precompute log(lambdaRate) for efficiency
-        log_lambdaRate = np.log(lambdaRate)
+        log_lambdaRate = np.log(lambdaRate) # Precompute log(lambdaRate) for efficiency
         args = [(y, pi, lambdaRate, states, t, S, C, log_lambdaRate) for t in range(T)]
         S = np.array(pool.map(update_state_sequence, args))
 

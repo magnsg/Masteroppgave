@@ -11,7 +11,7 @@ if __name__ == "__main__":
     celldata = data['celldata']
     celldata = celldata.astype(int)
     # Maybe remove less active cells
-    numstates = 1000
+    numstates = 15
     N_iter = 200
 
     S, pi, lambdaRate = mcmc(celldata, numstates, N_iter)
