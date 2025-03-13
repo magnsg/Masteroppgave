@@ -1,7 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import scipy.io as sio
-import scipy.special as sp
 from tqdm import tqdm  # Import tqdm for progress bar
 
 

@@ -3,16 +3,17 @@ import matplotlib.pyplot as plt
 import scipy.io as sio
 import scipy.special as sp
 
-from mcmc_file3 import mcmc
+from mcmc_file4 import mcmc
+#from mcmc_file3 import mcmc
 
 if __name__ == "__main__":
     data = sio.loadmat('MouseData.mat')
 
     celldata = data['celldata']
-    celldata = celldata.astype(int)
+    celldata = np.array(celldata.astype(int))
     # Maybe remove less active cells
-    numstates = 15
-    N_iter = 200
+    numstates = 5
+    N_iter = 2000
 
     S, pi, lambdaRate = mcmc(celldata, numstates, N_iter)
 
