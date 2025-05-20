@@ -2,4 +2,4 @@ numpy
 scipy
 matplotlib
 tqdm
-cupy
+cupy-cuda12x

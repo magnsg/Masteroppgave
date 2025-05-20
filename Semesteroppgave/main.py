@@ -2,7 +2,8 @@ import numpy as np
 import scipy.io as sio
 import scipy.special as sp
 
-from mcmc_file4 import mcmc
+from mcmc_file5 import mcmc
+#from mcmc_file4 import mcmc
 #from mcmc_file3 import mcmc
 
 if __name__ == "__main__":
@@ -18,14 +19,10 @@ if __name__ == "__main__":
     print(f"Original number of cells: {celldata.shape[0]}")
     print(f"Number of cells after filtering: {celldata_filtered.shape[0]}")
     
-    numstates = 9
-    N_iter = 2000
+    numstates = 10
+    N_iter = 5000
 
     S, pi, lambdaRate = mcmc(celldata, numstates, N_iter)
 
     np.savez('result1.npz',S,pi,lambdaRate,numstates)
-
-
-
-
 

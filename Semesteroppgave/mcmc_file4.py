@@ -159,7 +159,7 @@ def mcmc(y, numstates, N_iter=10):
     # Initialize parameters
     pi = cp.full((m, m), 1 / m, dtype=cp.float32)  # Transition matrix
     lambdaRate = cp.random.rand(C, m).astype(cp.float32)  # Rate matrix
-    S = cp.random.randint(0, m, T, dtype=cp.int8)  # State sequence
+    S = cp.random.randint(0, m, T, dtype=cp.int32)  # State sequence
     S_prev = cp.copy(S)  # Previous state sequence
 
     # Hyperparameters

@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io as sio
 import scipy.special as sp
+from scipy.stats import circmean
 
 
 # Load the .npz file
@@ -25,6 +26,33 @@ data.close()
 
 data = sio.loadmat('MouseData.mat')
 headdata = data['resampledAwakeHeadAngleData'].flatten()
+
+
+#Reorder States based on the mean head angle of each state
+# Calculate circular mean head angle for each state (data in radians)
+mean_head_angles = np.zeros(numstates)
+for i in range(numstates):
+    state_indices = (S == i) & (~np.isnan(headdata))
+    if np.any(state_indices):
+        mean_head_angles[i] = circmean(headdata[state_indices], low=0, high=2*np.pi)
+    else:
+        mean_head_angles[i] = np.nan
+
+# Order states based on circular mean
+ordered_states = np.argsort(mean_head_angles)
+
+# Reorder state sequence and transition matrix
+S_reordered = np.argsort(ordered_states)[S]
+pi_reordered = pi[ordered_states][:, ordered_states]
+
+# Update variables
+S = S_reordered
+pi = pi_reordered
+
+
+
+
+
 
 # Plot the state sequence
 plt.plot(S)
@@ -71,6 +99,7 @@ ax.set_title('Head data colored by state (radial plot)')
 # Add a legend
 plt.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1))
 
+
 # Show the plot
 plt.show()
 
@@ -82,3 +111,5 @@ plt.colorbar()  # Add a colorbar
 plt.title('Rate matrix')    # Add a title
 plt.show()  # Display the plot
 """""
+
+
